@@ -1,112 +1,89 @@
-# Configurador de Motos — Resumen de lo implementado.
+# Configurador de Motos
+**Proyecto personal de práctica — Producción de Videojuegos 2026**
 
-## 📂 Estructura final del proyecto
+## 🏷️ Nombre del Proyecto
+Configurador de Motos — Prototipo Interactivo 2D
+
+## 📝 Descripción del Proyecto
+Este repositorio contiene un prototipo interactivo inspirado en configuradores comerciales de motocicletas (como el "Make It Yours" de Royal Enfield). El proyecto aplica, sobre un caso práctico distinto al del curso, la misma arquitectura de software vista en los Laboratorios 1 a 4: navegación desacoplada mediante un Event Bus, estado global centralizado, y componentes de interfaz reutilizables, todo desarrollado en Godot Engine.
+
+## 🎯 Objetivo del Software Interactivo
+Permitir que el usuario configure visualmente una motocicleta —eligiendo color y accesorios— y vea el precio total actualizarse en tiempo real, mientras navega entre un menú principal, el configurador y una pantalla de créditos. El proyecto sirve como ejercicio personal para trasladar conceptos de arquitectura de software a un dominio distinto al del proyecto integrador del curso.
+
+## 📸 Captura de Pantalla del Estado Actual
+> _Agrega aquí una captura del menú principal en ejecución y guárdala como
+> `doc/screenshots/estado_actual.png`. Luego inserta:_
+> `![Estado actual del proyecto](doc/screenshots/estado_actual.png)`
+
+## 📂 Estructura de Directorios del Repositorio
+El proyecto sigue una arquitectura modular con co-localización estricta
+(cada escena vive junto a su script controlador, salvo Créditos, que
+conserva un script mínimo únicamente para su animación de entrada):
 
 ```
-moto-configurador/
-├── .gitignore
-├── README.md
-├── project.godot
-└── src/
-	├── core/
-	│   ├── event_bus.gd          <- Autoload "EventBus"
-	│   ├── config_state.gd       <- Autoload "ConfigState"
-	│   ├── main_app.gd
-	│   └── main_app.tscn         <- Escena principal
-	└── scenes/
-		├── menu/
-		│   ├── menu_panel.gd
-		│   └── menu_panel.tscn
-		├── configurator/
-		│   ├── configurator_panel.gd
-		│   └── configurator_panel.tscn
-		└── credits/
-			├── credits_panel.gd
-			└── credits_panel.tscn
+src/
+├── core/
+│   ├── event_bus.gd            <- Autoload "EventBus" (Observer/Singleton)
+│   ├── global_manager.gd       <- Autoload "GlobalManager"
+│   ├── main_app.tscn           <- Escena principal (orquestador)
+│   └── main_app.gd
+├── scenes/
+│   ├── menu/                   <- Menú principal
+│   ├── configurator/           <- Configurador de color y accesorios
+│   └── credits/                <- Créditos
+├── components/
+│   └── navigation/
+│       └── button_nav.tscn     <- Botón de navegación reutilizable
+└── assets/
+    └── ui/
+        └── theme_industrial.tres <- Tema visual (grises + naranja)
 ```
 
-## 🧱 Del Laboratorio 1 
-- Nodo raíz `Control` en las 3 escenas de interfaz.
-- Layout con `VBoxContainer`, `HBoxContainer` y `GridContainer` — sin
-  posiciones absolutas en píxeles.
-- Tipado estático estricto en todas las funciones y variables.
-- `@onready` para capturar nodos, `$` solo en la declaración inicial.
-- Un único callback por grupo de botones homogéneos, parametrizado con
-  `.bind()`:
-  - 3 botones de color → `_on_color_selected(nombre_color)`
-  - 3 botones de accesorios → `_on_accesorio_toggled(activado, nombre, precio)`
-  - Botones de navegación del menú → `_on_navigate_pressed(target_scene_path)`
+## 🧩 Arquitectura de Navegación Desacoplada
+La navegación entre pantallas se resuelve mediante un **Event Bus global**
+(Autoload `EventBus`) que centraliza la comunicación siguiendo el patrón
+Observer. Cada panel emite `navigation_requested(target_scene,
+discard_previous)` y `MainApp` es el único responsable de instanciar y
+liberar escenas de forma segura, manteniendo además una pila
+`navigation_history` que registra la secuencia de pantallas visitadas.
 
-## 🧱 Del Laboratorio 2
-- `EventBus` (Autoload) con señales tipadas:
-  - `navigation_requested(target_scene_path: String)`
-  - `parameter_changed(param_name: String, value: Variant)`
-- `MainApp` como orquestador único: se suscribe al bus, libera la escena
-  anterior con `queue_free()`, limpia la referencia (`current_scene = null`)
-  e instancia la siguiente.
-- Ninguna escena conoce a otra directamente — solo se comunican vía
-  `EventBus`.
-- Estructura modular con co-localización (escena + script juntos por
-  carpeta).
+## 🧠 Estado Global Centralizado (GlobalManager)
+Ningún panel calcula ni almacena datos de negocio localmente.
+`GlobalManager` (Autoload) centraliza el color elegido, los accesorios
+activos y el precio total en estructuras de datos propias, escucha las
+señales `color_selected` y `accessory_toggled` del EventBus, y notifica
+el resultado mediante `color_changed` y `total_changed`. La interfaz del
+configurador solo emite intenciones y reacciona de forma pasiva a esas
+señales.
 
-## 🆕 Piezas nuevas agregadas
+## 🧩 Componentes Reutilizables
+La lógica de navegación se extrae a `src/components/navigation/`. El
+componente `button_nav.tscn` es un `Button` con las variables exportadas
+`target_scene` (selector de archivo `.tscn`) y `discard_previous`
+(bandera para indicar si es un botón de "volver"). Se usa como instancia
+dentro de `menu_panel`, `configurator_panel` y `credits_panel`, sin que
+esos paneles necesiten declarar su propio callback de navegación.
 
-### 1. Panel de Configurador (`configurator_panel`)
-- Sidebar con 3 colores (botones normales) y 3 accesorios (botones con
-  `toggle_mode = true`, funcionan como checkboxes).
-- `VistaMoto` (`ColorRect`): espacio reservado para las fotos de motos —
-  hoy cambia de color como feedback visual provisional, con instrucciones
-  en el código de cómo pasarlo a `TextureRect` con imágenes reales.
-- `LblTotal`: suma en tiempo real el precio de los accesorios activos.
+## 🎨 Identidad Visual
+El proyecto usa un tema industrial (grises oscuros con acento naranja),
+definido en un único recurso `Theme` de Godot
+(`src/assets/ui/theme_industrial.tres`) y aplicado globalmente desde la
+configuración del proyecto. Las transiciones entre pantallas usan un
+`Tween` con curva de suavizado para una aparición más natural.
 
-### 2. `ConfigState` 
-Guarda en memoria mientras la app está abierta:
-```gdscript
-var moto_seleccionada: String = ""
-var color_seleccionado: String = "Sin seleccionar"
-var accesorios_seleccionados: Array[String] = []
-var precio_total: int = 0
-```
-Con funciones `agregar_accesorio()`, `quitar_accesorio()`,
-`establecer_color()`, `reiniciar()`.
+## ⚙️ Tecnologías Utilizadas
+* **Engine:** Godot Engine 4.x (Renderizador: *Compatibility* para portabilidad web)
+* **Lenguaje:** GDScript 2.0 (Tipado estricto)
+* **Versionamiento:** Git / GitHub
 
-Resuelve la persistencia de estado entre escenas: si sales del
-configurador y vuelves a entrar, tu selección sigue ahí (se restaura en
-`_restaurar_estado_guardado()`).
+## 🎨 Personalización del Proyecto
+El nombre, la descripción y el tema visual del proyecto se configuraron
+desde el panel interno de Godot Engine:
 
-### 3. Panel de Créditos 
-- Jorge Eliecer Montes Rodríguez
-- Ingeniería de Software
-- Producción de Videojuegos - UAN 2026-2
-- Botón "Volver al Menú" vía `EventBus`
+**Project > Project Settings > Application > Config** (nombre y descripción)
+**Project > Project Settings > GUI** (tema visual global)
 
-Conectado desde el menú con el mismo callback unificado (`.bind()`) que
-usa el botón de configurador.
-
-### 4. Transiciones con `Tween` (fade-in)
-Agregado a los 3 paneles (`menu_panel`, `configurator_panel`,
-`credits_panel`):
-```gdscript
-func _reproducir_fade_in() -> void:
-	modulate.a = 0.0
-	var tween: Tween = create_tween()
-	tween.tween_property(self, "modulate:a", 1.0, 0.4)
-```
-Cada panel arranca invisible y aparece con un desvanecido suave de 0.4
-segundos al entrar, en vez de aparecer de golpe.
-
-## ⚙️ Autoloads registrados en `project.godot`
-```ini
-[autoload]
-EventBus="*res://src/core/event_bus.gd"
-ConfigState="*res://src/core/config_state.gd"
-```
-
-## 🚀 Pendientes / ideas para seguir
-- ADR-0002 documentando por qué se separó `ConfigState` de `EventBus`.
-- Reorganizar accesorios en `GridContainer` de 2 columnas (hoy es lista
-  de 1 columna).
-- DEVLOG propio de este proyecto.
-- Fade-out antes de cambiar de escena (usando `await tween.finished`).
-- Fotos reales de motos reemplazando el `ColorRect` por `TextureRect`.
-- Nodos con `%NombreUnico` en vez de rutas `$` largas.
+## 👨‍💻 Autor
+* **Nombre:** Jorge Eliecer Montes Rodríguez
+* **Código Estudiantil:** 12242614169
+* **Programa:** Ingeniería de Software
