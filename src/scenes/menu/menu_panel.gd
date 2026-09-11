@@ -13,7 +13,9 @@ func _ready() -> void:
 func _reproducir_fade_in() -> void:
 	modulate.a = 0.0
 	var tween: Tween = create_tween()
-	tween.tween_property(self, "modulate:a", 1.0, 0.4)
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "modulate:a", 1.0, 0.25)
 
 func _on_btn_salir_pressed() -> void:
 	get_tree().quit()
