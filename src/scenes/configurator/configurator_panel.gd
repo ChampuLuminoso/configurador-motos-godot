@@ -1,10 +1,10 @@
 # res://src/scenes/configurator/configurator_panel.gd
+# Aquí no calculas ningún precio: solo avisas por el EventBus qué elegiste
+# (color o accesorio) y esperas a que GlobalManager te devuelva el
+# resultado para actualizar lo que ves en pantalla.
 extends Control
 
-const MENU_SCENE_PATH: String = "res://src/scenes/menu/menu_panel.tscn"
-
-# Colores disponibles (nombre -> Color). Cuando tengas fotos reales,
-# reemplaza esto por rutas de textura, ej: {"Negro": "res://.../negro.png"}
+# Reemplaza esto por rutas de imagen cuando tengas fotos reales de la moto.
 const COLORES: Dictionary = {
 	"Negro": Color("1a1a1a"),
 	"Rojo": Color("c0392b"),
@@ -22,23 +22,22 @@ const COLORES: Dictionary = {
 @onready var vista_moto: ColorRect = $HBoxMain/PanelVista/VistaMoto
 @onready var lbl_placeholder: Label = $HBoxMain/PanelVista/VistaMoto/LblPlaceholder
 @onready var lbl_total: Label = $BarraInferior/LblTotal
-@onready var btn_volver: Button = $BarraInferior/BtnVolver
 
 func _ready() -> void:
-	# --- Conexión local con callback único por grupo (mismo patrón del Lab 1) ---
-	btn_color_negro.pressed.connect(_on_color_selected.bind("Negro"))
-	btn_color_rojo.pressed.connect(_on_color_selected.bind("Rojo"))
-	btn_color_azul.pressed.connect(_on_color_selected.bind("Azul"))
+	# Solo avisas la intención, no decides qué pasa después.
+	btn_color_negro.pressed.connect(_on_color_button_pressed.bind("Negro"))
+	btn_color_rojo.pressed.connect(_on_color_button_pressed.bind("Rojo"))
+	btn_color_azul.pressed.connect(_on_color_button_pressed.bind("Azul"))
 
-	btn_parabrisas.toggled.connect(_on_accesorio_toggled.bind("Parabrisas", 150000))
-	btn_alforjas.toggled.connect(_on_accesorio_toggled.bind("Alforjas", 300000))
-	btn_escape.toggled.connect(_on_accesorio_toggled.bind("Escape Deportivo", 450000))
+	btn_parabrisas.toggled.connect(_on_accessory_button_toggled.bind("Parabrisas"))
+	btn_alforjas.toggled.connect(_on_accessory_button_toggled.bind("Alforjas"))
+	btn_escape.toggled.connect(_on_accessory_button_toggled.bind("Escape Deportivo"))
 
-	btn_volver.pressed.connect(_on_btn_volver_pressed)
+	# Escuchas lo que GlobalManager decide, sin llamarlo directamente.
+	EventBus.color_changed.connect(_on_color_changed)
+	EventBus.total_changed.connect(_on_total_changed)
 
-	# --- Restaurar el estado guardado en ConfigState (persistencia entre escenas) ---
-	_restaurar_estado_guardado()
-	_actualizar_total()
+	_restaurar_estado_actual()
 	_reproducir_fade_in()
 
 func _reproducir_fade_in() -> void:
@@ -46,40 +45,31 @@ func _reproducir_fade_in() -> void:
 	var tween: Tween = create_tween()
 	tween.tween_property(self, "modulate:a", 1.0, 0.4)
 
-func _restaurar_estado_guardado() -> void:
-	if ConfigState.color_seleccionado in COLORES:
-		vista_moto.color = COLORES[ConfigState.color_seleccionado]
+func _restaurar_estado_actual() -> void:
+	# Si vuelves a esta pantalla, recuperas lo que ya tenías elegido.
+	if GlobalManager.color_actual in COLORES:
+		vista_moto.color = COLORES[GlobalManager.color_actual]
 		lbl_placeholder.visible = false
 
-	if ConfigState.accesorios_seleccionados.has("Parabrisas"):
+	if GlobalManager.accesorios_activos.has("Parabrisas"):
 		btn_parabrisas.button_pressed = true
-	if ConfigState.accesorios_seleccionados.has("Alforjas"):
+	if GlobalManager.accesorios_activos.has("Alforjas"):
 		btn_alforjas.button_pressed = true
-	if ConfigState.accesorios_seleccionados.has("Escape Deportivo"):
+	if GlobalManager.accesorios_activos.has("Escape Deportivo"):
 		btn_escape.button_pressed = true
 
-func _on_color_selected(nombre_color: String) -> void:
-	ConfigState.establecer_color(nombre_color)
+	lbl_total.text = "Total accesorios: $%d" % GlobalManager.precio_total
 
-	# TODO (siguiente paso): cuando tengas fotos reales de la moto,
-	# reemplaza esta línea por vista_moto.texture = load(ruta_de_la_foto)
-	# usando un TextureRect en lugar de un ColorRect.
-	vista_moto.color = COLORES[nombre_color]
-	lbl_placeholder.visible = false
+func _on_color_button_pressed(nombre_color: String) -> void:
+	EventBus.color_selected.emit(nombre_color)
 
-	EventBus.parameter_changed.emit("color", nombre_color)
+func _on_accessory_button_toggled(activado: bool, nombre_accesorio: String) -> void:
+	EventBus.accessory_toggled.emit(nombre_accesorio, activado)
 
-func _on_accesorio_toggled(activado: bool, nombre: String, precio: int) -> void:
-	if activado:
-		ConfigState.agregar_accesorio(nombre, precio)
-	else:
-		ConfigState.quitar_accesorio(nombre, precio)
+func _on_color_changed(nombre_color: String) -> void:
+	if COLORES.has(nombre_color):
+		vista_moto.color = COLORES[nombre_color]
+		lbl_placeholder.visible = false
 
-	EventBus.parameter_changed.emit(nombre, activado)
-	_actualizar_total()
-
-func _actualizar_total() -> void:
-	lbl_total.text = "Total accesorios: $%d" % ConfigState.precio_total
-
-func _on_btn_volver_pressed() -> void:
-	EventBus.navigation_requested.emit(MENU_SCENE_PATH)
+func _on_total_changed(nuevo_total: int) -> void:
+	lbl_total.text = "Total accesorios: $%d" % nuevo_total
