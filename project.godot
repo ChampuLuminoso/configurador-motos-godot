@@ -20,6 +20,10 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 EventBus="*res://src/core/event_bus.gd"
 GlobalManager="*res://src/core/global_manager.gd"
 
+[gui]
+
+theme/custom="res://src/assets/ui/theme_industrial.tres"
+
 [display]
 
 window/stretch/mode="canvas_items"
