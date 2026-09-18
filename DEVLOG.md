@@ -9,3 +9,13 @@
 | Dificultades encontradas | Decidir qué hacer con el color al centralizarlo: el color no afecta el precio, pero se optó por manejarlo igual a través de `GlobalManager` (con su propia señal `color_changed`) para mantener un solo patrón consistente en todo el proyecto, en vez de tener una excepción especial solo para el color. |
 | Decisiones de diseño | Se documentó la decisión completa en `doc/adr/ADR-001-global-manager-button-nav.md`. Se decidió mantener un script mínimo en `credits_panel.gd` (solo para la animación de entrada) en vez de dejarlo completamente sin script, priorizando el detalle visual sobre la pureza del patrón. |
 | Próximos pasos | Agregar fotos reales de la moto en vez del `ColorRect` de vista previa. Evaluar persistencia en disco de la configuración elegida. |
+
+## Interacción y Mecánicas Básicas (patrón Lab 5)
+
+| Campo | Detalle |
+|---|---|
+| Fecha | 18/09/2026 |
+| Funcionalidades implementadas | Se agregó entrada por teclado en `configurator_panel`: teclas 1/2/3 seleccionan color, teclas 4/5/6 alternan accesorios, reutilizando los mismos callbacks que ya usaban los botones. Se agregó una zona de interacción reactiva: al pasar el mouse sobre cualquier botón de color o accesorio, un `Label` (`LblZonaActiva`) muestra cuál opción está bajo el cursor. |
+| Dificultades encontradas | Alternar un accesorio por teclado sin duplicar lógica: se resolvió con una función auxiliar `_alternar_accesorio_por_teclado()` que cambia el estado visual del botón y llama al mismo callback que ya manejaba el evento `toggled`. |
+| Decisiones de diseño | Igual que en el proyecto del curso, se usaron las señales nativas `mouse_entered`/`mouse_exited` en vez de colisiones, porque el proyecto es una interfaz 2D de `Control`. |
+| Próximos pasos | Agregar fotos reales de motos. Evaluar una pequeña máquina de estados para el flujo de selección. |
