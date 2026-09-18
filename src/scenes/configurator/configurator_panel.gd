@@ -1,7 +1,11 @@
 # res://src/scenes/configurator/configurator_panel.gd
-# Aquí no calculas ningún precio: solo avisas por el EventBus qué elegiste
-# (color o accesorio) y esperas a que GlobalManager te devuelva el
-# resultado para actualizar lo que ves en pantalla.
+# ---------------------------------------------------------------------------
+# Actualizado con mecánicas de interacción básicas (mismo patrón aplicado
+# en el proyecto del curso): entrada por teclado que reutiliza los
+# mismos callbacks de siempre, y una zona de interacción que resalta
+# qué opción está bajo el mouse. Nada del flujo reactivo con EventBus /
+# GlobalManager cambia.
+# ---------------------------------------------------------------------------
 extends Control
 
 # Reemplaza esto por rutas de imagen cuando tengas fotos reales de la moto.
@@ -22,6 +26,7 @@ const COLORES: Dictionary = {
 @onready var vista_moto: ColorRect = $HBoxMain/PanelVista/VistaMoto
 @onready var lbl_placeholder: Label = $HBoxMain/PanelVista/VistaMoto/LblPlaceholder
 @onready var lbl_total: Label = $BarraInferior/LblTotal
+@onready var lbl_zona_activa: Label = $LblZonaActiva
 
 func _ready() -> void:
 	# Solo avisas la intención, no decides qué pasa después.
@@ -33,12 +38,49 @@ func _ready() -> void:
 	btn_alforjas.toggled.connect(_on_accessory_button_toggled.bind("Alforjas"))
 	btn_escape.toggled.connect(_on_accessory_button_toggled.bind("Escape Deportivo"))
 
+	# --- Zona de interacción: resalta qué opción está bajo el mouse ---
+	for boton_zona: Dictionary in [
+		{"nodo": btn_color_negro, "nombre": "Color Negro"},
+		{"nodo": btn_color_rojo, "nombre": "Color Rojo"},
+		{"nodo": btn_color_azul, "nombre": "Color Azul"},
+		{"nodo": btn_parabrisas, "nombre": "Parabrisas"},
+		{"nodo": btn_alforjas, "nombre": "Alforjas"},
+		{"nodo": btn_escape, "nombre": "Escape Deportivo"},
+	]:
+		var boton: Button = boton_zona["nodo"]
+		boton.mouse_entered.connect(_on_zona_mouse_entered.bind(boton_zona["nombre"]))
+		boton.mouse_exited.connect(_on_zona_mouse_exited)
+
 	# Escuchas lo que GlobalManager decide, sin llamarlo directamente.
 	EventBus.color_changed.connect(_on_color_changed)
 	EventBus.total_changed.connect(_on_total_changed)
 
 	_restaurar_estado_actual()
 	_reproducir_fade_in()
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+
+	# El teclado reutiliza los mismos callbacks que los botones: nada de
+	# lógica de selección duplicada.
+	match event.keycode:
+		KEY_1:
+			_on_color_button_pressed("Negro")
+		KEY_2:
+			_on_color_button_pressed("Rojo")
+		KEY_3:
+			_on_color_button_pressed("Azul")
+		KEY_4:
+			_alternar_accesorio_por_teclado(btn_parabrisas, "Parabrisas")
+		KEY_5:
+			_alternar_accesorio_por_teclado(btn_alforjas, "Alforjas")
+		KEY_6:
+			_alternar_accesorio_por_teclado(btn_escape, "Escape Deportivo")
+
+func _alternar_accesorio_por_teclado(boton: Button, nombre_accesorio: String) -> void:
+	boton.button_pressed = not boton.button_pressed
+	_on_accessory_button_toggled(boton.button_pressed, nombre_accesorio)
 
 func _reproducir_fade_in() -> void:
 	modulate.a = 0.0
@@ -75,3 +117,9 @@ func _on_color_changed(nombre_color: String) -> void:
 
 func _on_total_changed(nuevo_total: int) -> void:
 	lbl_total.text = "Total accesorios: $%d" % nuevo_total
+
+func _on_zona_mouse_entered(nombre_zona: String) -> void:
+	lbl_zona_activa.text = "Zona activa: %s" % nombre_zona
+
+func _on_zona_mouse_exited() -> void:
+	lbl_zona_activa.text = "Zona activa: ninguna"
