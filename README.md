@@ -35,8 +35,8 @@ src/
 │   └── navigation/
 │       └── button_nav.tscn     <- Botón de navegación reutilizable
 └── assets/
-    └── ui/
-        └── theme_industrial.tres <- Tema visual (grises + naranja)
+	└── ui/
+		└── theme_industrial.tres <- Tema visual (grises + naranja)
 ```
 
 ## 🧩 Arquitectura de Navegación Desacoplada

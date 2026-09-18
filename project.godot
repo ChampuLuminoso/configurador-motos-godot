@@ -14,20 +14,21 @@ config/name="Configurador de Motos"
 config/description="Proyecto de práctica aplicando la arquitectura de los Laboratorios 1 y 2"
 run/main_scene="res://src/core/main_app.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="uid://7fv2iv6v4278"
 
 [autoload]
 
 EventBus="*res://src/core/event_bus.gd"
 GlobalManager="*res://src/core/global_manager.gd"
 
-[gui]
-
-theme/custom="res://src/assets/ui/theme_industrial.tres"
-
 [display]
 
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[gui]
+
+theme/custom="res://src/assets/ui/theme_industrial.tres"
 
 [rendering]
 
