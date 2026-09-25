@@ -152,3 +152,9 @@ layout_mode = 2
 text = "Volver al Menú"
 target_scene = "res://src/scenes/menu/menu_panel.tscn"
 discard_previous = true
+
+[node name="BtnContinuarCompra" parent="BarraInferior" instance=ExtResource("2")]
+layout_mode = 2
+text = "Continuar compra"
+target_scene = "res://src/scenes/purchase_invoice/purchase_invoice.tscn"
+discard_previous = false
