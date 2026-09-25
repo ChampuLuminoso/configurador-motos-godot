@@ -1,0 +1,185 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://src/scenes/gamification/coupon_game.gd" id="1"]
+[ext_resource type="Script" path="res://src/scenes/gamification/player.gd" id="2"]
+[ext_resource type="PackedScene" path="res://src/scenes/gamification/spawner.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://src/components/navigation/button_nav.tscn" id="4"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
+size = Vector2(64, 64)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_recolect"]
+size = Vector2(170, 70)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
+size = Vector2(1000, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(20, 420)
+
+[node name="CouponGame" type="Node2D"]
+script = ExtResource("1")
+target_items = 8
+max_spawned_items = 20
+coupon_value = 50000
+coupon_minimum_value = 300000
+
+[node name="Player" type="CharacterBody2D" parent="."]
+position = Vector2(576, 560)
+script = ExtResource("2")
+speed = 420.0
+
+[node name="Visual" type="ColorRect" parent="Player"]
+layout_mode = 0
+position = Vector2(-32, -32)
+size = Vector2(64, 64)
+color = Color(0.15, 0.15, 0.16, 1)
+mouse_filter = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+shape = SubResource("RectangleShape2D_player")
+
+[node name="AreaRecolect" type="Area2D" parent="Player"]
+position = Vector2(0, -70)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player/AreaRecolect"]
+shape = SubResource("RectangleShape2D_recolect")
+
+[node name="Floor" type="StaticBody2D" parent="." groups=["floor"]]
+position = Vector2(576, 620)
+
+[node name="Visual" type="ColorRect" parent="Floor"]
+layout_mode = 0
+position = Vector2(-500, -16)
+size = Vector2(1000, 32)
+color = Color(0.45, 0.45, 0.47, 1)
+mouse_filter = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor"]
+shape = SubResource("RectangleShape2D_floor")
+
+[node name="FunnelWalls" type="StaticBody2D" parent="."]
+position = Vector2(576, 250)
+
+[node name="WallLeft" type="CollisionShape2D" parent="FunnelWalls"]
+position = Vector2(-320, 0)
+rotation = -0.22
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="WallLeftVisual" type="ColorRect" parent="FunnelWalls"]
+position = Vector2(-320, 0)
+rotation = -0.22
+layout_mode = 0
+size = Vector2(20, 420)
+offset_left = -10.0
+offset_top = -210.0
+color = Color(0.85, 0.45, 0.1, 1)
+mouse_filter = 2
+
+[node name="WallRight" type="CollisionShape2D" parent="FunnelWalls"]
+position = Vector2(320, 0)
+rotation = 0.22
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="WallRightVisual" type="ColorRect" parent="FunnelWalls"]
+position = Vector2(320, 0)
+rotation = 0.22
+layout_mode = 0
+size = Vector2(20, 420)
+offset_left = -10.0
+offset_top = -210.0
+color = Color(0.85, 0.45, 0.1, 1)
+mouse_filter = 2
+
+[node name="SpawnerCentro" parent="." instance=ExtResource("3")]
+position = Vector2(576, 30)
+max_active_items = 6
+spawn_interval = 0.9
+use_parabola = false
+
+[node name="SpawnerIzquierda" parent="." instance=ExtResource("3")]
+position = Vector2(280, 60)
+max_active_items = 5
+spawn_interval = 1.2
+use_parabola = true
+parabola_horizontal_range = 150.0
+parabola_vertical_impulse = -180.0
+
+[node name="SpawnerDerecha" parent="." instance=ExtResource("3")]
+position = Vector2(872, 60)
+max_active_items = 5
+spawn_interval = 1.2
+use_parabola = true
+parabola_horizontal_range = 150.0
+parabola_vertical_impulse = -180.0
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="BtnVolver" parent="CanvasLayer" instance=ExtResource("4")]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 180.0
+offset_bottom = 48.0
+text = "Salir del juego"
+target_scene = "res://src/scenes/coupon_event/coupon_event.tscn"
+discard_previous = true
+
+[node name="Objective" type="Label" parent="CanvasLayer"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -260.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 40.0
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 2
+text = "Repuestos: 0 / 8"
+
+[node name="ResultPanel" type="Panel" parent="CanvasLayer"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -80.0
+offset_right = 180.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ResultLabel" type="Label" parent="CanvasLayer/ResultPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.35
+anchor_right = 0.5
+anchor_bottom = 0.35
+offset_left = -160.0
+offset_top = -20.0
+offset_right = 160.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Resultado"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="BtnResultVolver" parent="CanvasLayer/ResultPanel" instance=ExtResource("4")]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.7
+anchor_right = 0.5
+anchor_bottom = 0.7
+offset_left = -70.0
+offset_top = -16.0
+offset_right = 70.0
+offset_bottom = 16.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Volver"
+target_scene = "res://src/scenes/coupon_event/coupon_event.tscn"
+discard_previous = true
