@@ -21,3 +21,8 @@ signal accessory_toggled(accessory_id: String, active: bool)
 
 # GlobalManager te devuelve el total ya recalculado.
 signal total_changed(new_total: int)
+
+# Una actividad externa (el minijuego de repuestos) produjo un cupón.
+# El minijuego no conoce la pantalla de compra: solo publica el
+# resultado aquí. Agregado en el Laboratorio 5.
+signal coupon_obtained(coupon: Dictionary)
