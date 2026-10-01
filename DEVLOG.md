@@ -39,3 +39,15 @@
 **Animación Tween incorporada:** el `ResultPanel` aparece con una animación de escala y opacidad (`TRANS_BACK`/`EASE_OUT`) al entrar a `WON` o `LOST`. El botón "Volver" se deshabilita mientras dura la animación.
 
 **Próximos pasos:** evaluar FSM para el flujo de configuración (color → accesorios → factura).
+
+## [2026-10-09] - Persistencia de Cupones (patrón Lab 7)
+
+**Actividades realizadas:**
+- Se implementó persistencia de cupones en `GlobalManager` usando `FileAccess` y `JSON` (`SAVE_PATH = "user://save_data.json"`). Se guarda al obtener y al consumir un cupón; se carga una sola vez al iniciar.
+- Se recorrió el flujo completo: menú → configurador → cupones → minijuego → factura, confirmando que todo sigue integrado.
+
+**Desafíos encontrados:**
+[COMPLETAR si tuviste alguno]
+
+**Estado final:**
+[COMPLETAR: confirma que probaste cerrar/reabrir y que el cupón persiste]
