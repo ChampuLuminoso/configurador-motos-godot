@@ -37,7 +37,7 @@ anchor_bottom = 0.5
 offset_left = -90.0
 offset_top = -20.0
 offset_right = 90.0
-offset_bottom = 80.0
+offset_bottom = 130.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 10
@@ -46,6 +46,12 @@ theme_override_constants/separation = 10
 layout_mode = 2
 text = "Configurar mi moto"
 target_scene = "res://src/scenes/configurator/configurator_panel.tscn"
+discard_previous = false
+
+[node name="BtnCoupon" parent="VBoxMenu" instance=ExtResource("2")]
+layout_mode = 2
+text = "Conseguir Cupones"
+target_scene = "res://src/scenes/coupon_event/coupon_event.tscn"
 discard_previous = false
 
 [node name="BtnCreditos" parent="VBoxMenu" instance=ExtResource("2")]

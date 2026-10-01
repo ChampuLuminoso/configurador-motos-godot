@@ -14,9 +14,13 @@ var color_actual: String = "Sin seleccionar"
 var accesorios_activos: Array[String] = []
 var precio_total: int = 0
 
+# Cupones (Laboratorio 5). Ejemplo: {"value": 50000, "minimum_purchase": 300000}
+var coupons: Array[Dictionary] = []
+
 func _ready() -> void:
 	EventBus.color_selected.connect(_on_color_selected)
 	EventBus.accessory_toggled.connect(_on_accessory_toggled)
+	EventBus.coupon_obtained.connect(_on_coupon_obtained)
 
 func _on_color_selected(color_name: String) -> void:
 	color_actual = color_name
@@ -43,3 +47,23 @@ func _recalcular_total() -> void:
 
 	precio_total = total
 	EventBus.total_changed.emit(precio_total)
+
+# --- Cupones (Laboratorio 5) ---
+
+func _on_coupon_obtained(coupon: Dictionary) -> void:
+	coupons.append(coupon)
+	print("GlobalManager: cupón recibido -> ", coupon)
+
+func get_best_coupon(subtotal: int) -> Dictionary:
+	var best_coupon: Dictionary = {}
+	for coupon: Dictionary in coupons:
+		if subtotal >= coupon["minimum_purchase"]:
+			if best_coupon.is_empty():
+				best_coupon = coupon
+			elif coupon["value"] > best_coupon["value"]:
+				best_coupon = coupon
+	return best_coupon
+
+func remove_coupon(coupon: Dictionary) -> void:
+	if coupon in coupons:
+		coupons.erase(coupon)

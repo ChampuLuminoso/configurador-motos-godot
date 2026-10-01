@@ -1,0 +1,51 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://src/components/navigation/button_nav.tscn" id="1"]
+
+[node name="CouponEvent" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxCoupon" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -90.0
+offset_right = 180.0
+offset_bottom = 90.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+
+[node name="LblTitulo" type="Label" parent="VBoxCoupon"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Consigue tu Cupón de Descuento"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="LblDescripcion" type="Label" parent="VBoxCoupon"]
+layout_mode = 2
+text = "Recolecta repuestos en el taller y gana un cupón para tus accesorios."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="BtnJugar" parent="VBoxCoupon" instance=ExtResource("1")]
+layout_mode = 2
+text = "Jugar ahora"
+target_scene = "res://src/scenes/gamification/coupon_game.tscn"
+discard_previous = false
+
+[node name="BtnVolver" parent="VBoxCoupon" instance=ExtResource("1")]
+layout_mode = 2
+text = "Volver al Menú"
+target_scene = "res://src/scenes/menu/menu_panel.tscn"
+discard_previous = true
