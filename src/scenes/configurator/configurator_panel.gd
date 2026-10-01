@@ -8,8 +8,10 @@
 # ---------------------------------------------------------------------------
 extends Control
 
-# Reemplaza esto por rutas de imagen cuando tengas fotos reales de la moto.
-const COLORES: Dictionary = {
+# La imagen de la moto es UNA sola (ya en escala de grises, con el
+# contorno en negro) y se "pinta" con un tinte multiplicativo distinto
+# según el color elegido. Así no necesitas una foto por cada color.
+const COLOR_TINTS: Dictionary = {
 	"Negro": Color("1a1a1a"),
 	"Rojo": Color("c0392b"),
 	"Azul": Color("2980b9"),
@@ -23,8 +25,9 @@ const COLORES: Dictionary = {
 @onready var btn_alforjas: Button = $HBoxMain/PanelSidebar/GridAccesorios/BtnAlforjas
 @onready var btn_escape: Button = $HBoxMain/PanelSidebar/GridAccesorios/BtnEscape
 
-@onready var vista_moto: ColorRect = $HBoxMain/PanelVista/VistaMoto
+@onready var vista_moto: TextureRect = $HBoxMain/PanelVista/VistaMoto
 @onready var lbl_placeholder: Label = $HBoxMain/PanelVista/VistaMoto/LblPlaceholder
+@onready var btn_voltear: Button = $HBoxMain/PanelVista/BtnVoltear
 @onready var lbl_total: Label = $BarraInferior/LblTotal
 @onready var lbl_zona_activa: Label = $LblZonaActiva
 
@@ -37,6 +40,8 @@ func _ready() -> void:
 	btn_parabrisas.toggled.connect(_on_accessory_button_toggled.bind("Parabrisas"))
 	btn_alforjas.toggled.connect(_on_accessory_button_toggled.bind("Alforjas"))
 	btn_escape.toggled.connect(_on_accessory_button_toggled.bind("Escape Deportivo"))
+
+	btn_voltear.pressed.connect(_on_btn_voltear_pressed)
 
 	# --- Zona de interacción: resalta qué opción está bajo el mouse ---
 	for boton_zona: Dictionary in [
@@ -77,6 +82,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			_alternar_accesorio_por_teclado(btn_alforjas, "Alforjas")
 		KEY_6:
 			_alternar_accesorio_por_teclado(btn_escape, "Escape Deportivo")
+		KEY_7:
+			_on_btn_voltear_pressed()
 
 func _alternar_accesorio_por_teclado(boton: Button, nombre_accesorio: String) -> void:
 	boton.button_pressed = not boton.button_pressed
@@ -91,9 +98,7 @@ func _reproducir_fade_in() -> void:
 
 func _restaurar_estado_actual() -> void:
 	# Si vuelves a esta pantalla, recuperas lo que ya tenías elegido.
-	if GlobalManager.color_actual in COLORES:
-		vista_moto.color = COLORES[GlobalManager.color_actual]
-		lbl_placeholder.visible = false
+	_mostrar_imagen_color(GlobalManager.color_actual)
 
 	if GlobalManager.accesorios_activos.has("Parabrisas"):
 		btn_parabrisas.button_pressed = true
@@ -111,9 +116,18 @@ func _on_accessory_button_toggled(activado: bool, nombre_accesorio: String) -> v
 	EventBus.accessory_toggled.emit(nombre_accesorio, activado)
 
 func _on_color_changed(nombre_color: String) -> void:
-	if COLORES.has(nombre_color):
-		vista_moto.color = COLORES[nombre_color]
-		lbl_placeholder.visible = false
+	_mostrar_imagen_color(nombre_color)
+
+## Aplica el tinte correspondiente sobre la imagen base de la moto.
+func _mostrar_imagen_color(nombre_color: String) -> void:
+	if not COLOR_TINTS.has(nombre_color):
+		return
+	vista_moto.modulate = COLOR_TINTS[nombre_color]
+
+## "Espejo" horizontal: no es un giro 3D real, pero deja ver la moto
+## mirando hacia el otro lado con una sola imagen.
+func _on_btn_voltear_pressed() -> void:
+	vista_moto.flip_h = not vista_moto.flip_h
 
 func _on_total_changed(nuevo_total: int) -> void:
 	lbl_total.text = "Total accesorios: $%d" % nuevo_total

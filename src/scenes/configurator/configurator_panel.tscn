@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://src/scenes/configurator/configurator_panel.gd" id="1"]
 [ext_resource type="PackedScene" path="res://src/components/navigation/button_nav.tscn" id="2"]
+[ext_resource type="Texture2D" path="res://src/assets/textures/moto/moto_base.png" id="3"]
 
 [node name="ConfiguratorPanel" type="Control"]
 layout_mode = 3
@@ -74,7 +75,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="VistaMoto" type="ColorRect" parent="HBoxMain/PanelVista"]
+[node name="VistaMoto" type="TextureRect" parent="HBoxMain/PanelVista"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -87,17 +88,34 @@ offset_right = 180.0
 offset_bottom = 120.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.85, 0.85, 0.85, 1)
+texture = ExtResource("3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BtnVoltear" type="Button" parent="HBoxMain/PanelVista"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -70.0
+offset_top = 134.0
+offset_right = 70.0
+offset_bottom = 166.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Voltear vista"
 
 [node name="LblPlaceholder" type="Label" parent="HBoxMain/PanelVista/VistaMoto"]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "Espacio para foto 2D de la moto
-(elige un color para probar)"
+text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
