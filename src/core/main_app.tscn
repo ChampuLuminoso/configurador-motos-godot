@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://ci0xg737d1p0p"]
 
 [ext_resource type="Script" uid="uid://b1hym8v4uq47y" path="res://src/core/main_app.gd" id="1"]
+[ext_resource type="Texture2D" path="res://src/assets/ui/bg_industrial.png" id="2"]
 
 [node name="MainApp" type="Control" unique_id=1070751019]
 layout_mode = 3
@@ -11,14 +12,18 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.09, 0.09, 0.1, 1)
+mouse_filter = 2
+z_index = -10
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="SceneContainer" type="Control" parent="." unique_id=489907472]
 layout_mode = 1
