@@ -57,3 +57,19 @@ Retrospectiva breve
 ¿Qué mejora visual tuvo mayor impacto en la experiencia? Reemplazar el rectángulo de color plano por una imagen real de la moto con tinte dinámico — cambia por completo la sensación de "prototipo" a "producto".
 ¿Qué diferencia encontró entre ejecutar el proyecto en Godot y ejecutarlo como versión Web? La versión Web requiere un servidor (no se puede abrir el HTML directo con doble clic), y hay que configurar explícitamente las cabeceras de aislamiento de origen para que cargue correctamente en el navegador.
 ¿Qué debería mejorarse en el siguiente Sprint? Conseguir más ángulos de la moto para simular un giro real, y revisar la accesibilidad general de la interfaz de forma más sistemática.
+
+## [2026-10-23] - Laboratorio 8: Evaluación y Mejora de la Experiencia de Usuario
+
+**Prueba de usuario realizada:** se diseñó y aplicó un protocolo de prueba con un usuario real ajeno al desarrollo (ver `doc/ux/test_usuario_lab8.md`), observando sin intervenir el flujo completo: menú → minijuego "Taller de Repuestos" → configurador → factura.
+
+**Problemas de comunicación identificados:** el usuario de prueba no entendió de inmediato cómo moverse en el minijuego (no había ninguna instrucción en pantalla sobre las teclas), no notó cuándo estaba cerca de perder (la derrota llegaba sin aviso previo) y no percibió si su clic en "Cerrar" del popup de compra había registrado, por falta de retroalimentación inmediata. El detalle completo con Situación / Mejora propuesta / Resultado esperado está en `doc/ux/hallazgos_ux_lab8.md`.
+
+**Mejoras de UI implementadas:**
+- Se completó el estado `disabled` (antes ausente) en `theme_industrial.tres`, con su propio `StyleBoxFlat` y color de fuente atenuado, para que un botón deshabilitado (como "Volver" durante la animación del minijuego) se vea claramente distinto a uno activo.
+- Se agregó un popup `PurchaseSuccessPopup` en `purchase_invoice.tscn`, mostrado al confirmar la compra, para dar una confirmación visual explícita en vez de depender solo del cambio de texto de un `Label`.
+- Se reemplazó el fondo plano (`ColorRect`) de `MainApp` —aplicado globalmente a todas las pantallas— por un `TextureRect` con una imagen de fondo con textura industrial sutil (`bg_industrial.png`), usando `expand_mode = IGNORE_SIZE` y `stretch_mode = KEEP_ASPECT_COVERED` para que cubra la pantalla completa sin distorsionarse.
+- Se identificaron íconos recomendados para los elementos clave de la interfaz (ver tabla en `doc/ux/hallazgos_ux_lab8.md`), pendientes de incorporar como asset gráfico en un sprint futuro.
+
+**Dificultades encontradas:** aplicar el fondo una sola vez en `MainApp` en vez de escena por escena (como sugiere la guía) exigió decidir si eso contaba como cumplir el requisito; se documentó la decisión porque ya existía esa arquitectura desde el Laboratorio 4 y rehacerla por pantalla hubiera sido un paso atrás en el patrón del proyecto.
+
+**Próximos pasos:** incorporar los íconos identificados como imágenes reales en los botones, y repetir la prueba de usuario después de aplicar las mejoras para confirmar que los tres problemas detectados se resolvieron.
