@@ -8,11 +8,14 @@ extends Control
 @onready var lbl_coupon: Label = $VBoxContainer/LblCoupon
 @onready var lbl_total: Label = $VBoxContainer/LblTotal
 @onready var btn_confirm: Button = $VBoxContainer/BtnConfirm
+@onready var pop_up_confirm: Panel = $PurchaseSuccessPopup
+@onready var btn_cerrar_popup: Button = $PurchaseSuccessPopup/VBoxContainer/BtnCerrarPopup
 
 var applied_coupon: Dictionary = {}
 
 func _ready() -> void:
 	btn_confirm.pressed.connect(_on_confirm)
+	btn_cerrar_popup.pressed.connect(_on_cerrar_popup)
 	_update_invoice()
 
 func _on_confirm() -> void:
@@ -21,6 +24,10 @@ func _on_confirm() -> void:
 		applied_coupon = {}
 	lbl_coupon.text = "Compra confirmada. ¡Gracias por elegirnos!"
 	btn_confirm.disabled = true
+	pop_up_confirm.show()
+
+func _on_cerrar_popup() -> void:
+	pop_up_confirm.hide()
 
 func _update_invoice() -> void:
 	var color_actual: String = GlobalManager.color_actual
