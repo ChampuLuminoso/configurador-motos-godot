@@ -26,3 +26,13 @@ signal total_changed(new_total: int)
 # El minijuego no conoce la pantalla de compra: solo publica el
 # resultado aquí. Agregado en el Laboratorio 5.
 signal coupon_obtained(coupon: Dictionary)
+
+# Laboratorio 9 — personalización de rines mediante catálogo (Resource).
+# Avisas que elegiste un rin para una rueda puntual. "wheel" es "front"
+# o "rear": cada rueda se elige de forma independiente, igual que cada
+# mitad de la pizza en la guía.
+signal rim_selected(rim_id: String, wheel: String)
+
+# GlobalManager te devuelve el total ya recalculado incluyendo los
+# rines elegidos.
+signal rim_total_changed(new_total: int)

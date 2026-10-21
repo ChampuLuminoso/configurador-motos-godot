@@ -40,14 +40,18 @@ func _update_invoice() -> void:
 	if detalle_items.is_empty():
 		detalle_items = "(sin accesorios seleccionados)\n"
 
-	var subtotal: int = GlobalManager.precio_total
+	# Laboratorio 9 — rines elegidos desde el catálogo dinámico.
+	var detalle_rines: String = _detalle_rines()
+
+	var subtotal: int = GlobalManager.precio_total + GlobalManager.moto_rines_total
 
 	lbl_subtotal.text = (
 		"COLOR ELEGIDO: %s\n"
 		+ "%s"
+		+ "%s"
 		+ "--------------------------------\n"
 		+ "Subtotal: $%d"
-	) % [color_actual, detalle_items, subtotal]
+	) % [color_actual, detalle_items, detalle_rines, subtotal]
 
 	applied_coupon = GlobalManager.get_best_coupon(subtotal)
 
@@ -63,3 +67,21 @@ func _update_invoice() -> void:
 		lbl_coupon.text = "Sin cupón aplicable a esta compra."
 
 	lbl_total.text = "TOTAL: $%d" % final_total
+
+# Laboratorio 9 — arma el detalle de rines (delantero/trasero) a partir
+# del catálogo de GlobalManager.rims, consultando el id guardado en
+# moto_rines.
+func _detalle_rines() -> String:
+	var etiquetas: Dictionary = {"front": "Delantero", "rear": "Trasero"}
+	var detalle: String = ""
+
+	for wheel: String in ["front", "rear"]:
+		var rim_id: String = GlobalManager.moto_rines.get(wheel, "")
+		if rim_id.is_empty():
+			continue
+		for rim: RimData in GlobalManager.rims:
+			if rim.id == rim_id:
+				detalle += "RIN %s: %s    $%d\n" % [etiquetas[wheel], rim.display_name, rim.price]
+				break
+
+	return detalle

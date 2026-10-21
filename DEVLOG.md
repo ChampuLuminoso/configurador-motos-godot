@@ -73,3 +73,61 @@ Retrospectiva breve
 **Dificultades encontradas:** aplicar el fondo una sola vez en `MainApp` en vez de escena por escena (como sugiere la guía) exigió decidir si eso contaba como cumplir el requisito; se documentó la decisión porque ya existía esa arquitectura desde el Laboratorio 4 y rehacerla por pantalla hubiera sido un paso atrás en el patrón del proyecto.
 
 **Próximos pasos:** incorporar los íconos identificados como imágenes reales en los botones, y repetir la prueba de usuario después de aplicar las mejoras para confirmar que los tres problemas detectados se resolvieron.
+
+## [2026-10-30] - Laboratorio 9: Interfaz Dinámica y Representación de Datos
+
+### Actividades Realizadas
+
+- Se creó `RimData` mediante `Resource`, representando un estilo de rin (id, nombre, textura, precio).
+- Se creó `RimDatabase` y se generaron 4 recursos de rin (radios negro/blanco, tapado negro/blanco) en `src/data/rims/`, agrupados en `rim_database.tres`.
+- Se implementó una interfaz auto-poblada: la lista de rines en `wheel_customizer_panel.tscn` genera un botón por cada `RimData` del catálogo, sin botones escritos a mano.
+- Se implementó la selección independiente de las dos ruedas (delantera/trasera), cada una guardando su propio rin elegido.
+- Se incorporó retroalimentación visual mediante `ColorRect` + `Tween` al cambiar de rueda activa.
+- Se animó el cambio de textura al elegir un rin (escala + opacidad con `Tween`).
+- Se extendió `GlobalManager` y `EventBus` con el estado y las señales de los rines (`rim_selected`, `rim_total_changed`), y se sumó su costo al total mostrado en la factura.
+
+### Desafíos y Soluciones
+
+* **Desafío:** la guía está escrita sobre el dominio de una pizza con dos mitades; el proyecto de motos no tiene un equivalente obvio.
+* **Solución:** se tradujo a "rueda delantera / rueda trasera con su propio estilo de rin", documentado en `doc/adr/ADR-005-catalogo-dinamico-rines.md`. Fue una decisión consultada antes de construir, dado el tamaño del laboratorio.
+* **Desafío:** no existían imágenes de distintos estilos de rin.
+* **Solución:** se generaron 4 variantes (radios abiertos / tapado, en negro y blanco) con PIL, siguiendo el mismo criterio ya usado para `moto_base.png` en el Laboratorio 7 — recurso provisional a reemplazar por arte real más adelante.
+
+### Estado Final
+
+Se implementó una interfaz dinámica para seleccionar rines y modificar
+visualmente las dos ruedas de la moto, sin tocar el configurador de
+color y accesorios ya existente (ambos sistemas conviven, igual que en
+la guía original).
+
+## [2026-10-30] - Ajuste post-entrega Laboratorio 9: una sola interfaz
+
+Tras revisar la entrega, se decidió fusionar la personalización de
+rines dentro de `configurator_panel.tscn` en vez de mantenerla como
+pantalla aparte: el cliente ahora ve color, accesorios, rines y precio
+total en un mismo lugar, con las dos ruedas (delantera/trasera)
+mostradas justo debajo de la vista previa de la moto. Se eliminó
+`wheel_customizer_panel.tscn/.gd` y el botón de menú correspondiente,
+por quedar redundantes. Se le dio `class_name WheelComposition` al
+script de las ruedas para poder referenciarlo con tipado estático desde
+`configurator_panel.gd`. Decisión documentada en la sección
+"Actualización" de `doc/adr/ADR-005-catalogo-dinamico-rines.md`.
+También se aumentó el tamaño visual del rin tapado (negro y blanco)
+para que se note más frente a la llanta.
+
+## [2026-10-30] - Ajuste visual: sidebar recortado y negro real en rines
+
+El sidebar de `configurator_panel` quedaba más angosto que el texto de
+sus botones al envolverlo en un `ScrollContainer` (aparecía una barra
+de scroll horizontal y el texto se veía cortado). Se corrigió
+ensanchando el contenedor (300px) y deshabilitando el scroll
+horizontal (`horizontal_scroll_mode = 0`), dejando solo scroll
+vertical.
+
+Además, el color "negro" de los rines (`rin_radios_negro.png` y
+`rin_tapado_negro.png`) se veía gris, porque se había aclarado a
+propósito para distinguir los radios/el anillo del resto. Se
+regeneraron con el rin en negro real (casi 0,0,0), igual de oscuro que
+el borde de la llanta, usando solo un contraste mínimo (huecos y
+anillo apenas un poco más claros) para que siga siendo legible sin
+dejar de verse negro.

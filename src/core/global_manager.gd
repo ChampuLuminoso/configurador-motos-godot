@@ -20,10 +20,26 @@ var coupons: Array[Dictionary] = []
 # Laboratorio 7 — ruta del archivo de persistencia.
 const SAVE_PATH: String = "user://save_data.json"
 
+# --- Laboratorio 9 — catálogo de rines mediante Resource ---
+# GlobalManager no almacena los rines disponibles: solo da acceso al
+# catálogo que vive en rim_database.tres. Igual que con los ingredientes
+# de la guía, agregar un rin nuevo es crear un recurso y sumarlo ahí,
+# sin tocar este script ni la interfaz.
+var rim_database: RimDatabase = preload("res://src/data/rim_database.tres")
+
+var rims: Array[RimData]:
+	get:
+		return rim_database.rims
+
+# Rin elegido para cada rueda, de forma independiente.
+var moto_rines: Dictionary = {"front": "", "rear": ""}
+var moto_rines_total: int = 0
+
 func _ready() -> void:
 	EventBus.color_selected.connect(_on_color_selected)
 	EventBus.accessory_toggled.connect(_on_accessory_toggled)
 	EventBus.coupon_obtained.connect(_on_coupon_obtained)
+	EventBus.rim_selected.connect(_on_rim_selected)
 	load_coupons()
 
 func _on_color_selected(color_name: String) -> void:
@@ -51,6 +67,29 @@ func _recalcular_total() -> void:
 
 	precio_total = total
 	EventBus.total_changed.emit(precio_total)
+
+# --- Laboratorio 9 — selección de rines ---
+
+func _on_rim_selected(rim_id: String, wheel: String) -> void:
+	if not moto_rines.has(wheel):
+		push_warning("GlobalManager: rueda desconocida -> %s" % wheel)
+		return
+
+	moto_rines[wheel] = rim_id
+	_recalcular_rines_total()
+
+func _recalcular_rines_total() -> void:
+	var total: int = 0
+	for rim_id: String in moto_rines.values():
+		if rim_id.is_empty():
+			continue
+		for rim: RimData in rims:
+			if rim.id == rim_id:
+				total += rim.price
+				break
+
+	moto_rines_total = total
+	EventBus.rim_total_changed.emit(moto_rines_total)
 
 # --- Cupones (Laboratorio 5) ---
 

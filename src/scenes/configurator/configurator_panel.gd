@@ -17,13 +17,18 @@ const COLOR_TINTS: Dictionary = {
 	"Azul": Color("2980b9"),
 }
 
-@onready var btn_color_negro: Button = $HBoxMain/PanelSidebar/GridColores/BtnColorNegro
-@onready var btn_color_rojo: Button = $HBoxMain/PanelSidebar/GridColores/BtnColorRojo
-@onready var btn_color_azul: Button = $HBoxMain/PanelSidebar/GridColores/BtnColorAzul
+@onready var btn_color_negro: Button = $HBoxMain/SidebarScroll/PanelSidebar/GridColores/BtnColorNegro
+@onready var btn_color_rojo: Button = $HBoxMain/SidebarScroll/PanelSidebar/GridColores/BtnColorRojo
+@onready var btn_color_azul: Button = $HBoxMain/SidebarScroll/PanelSidebar/GridColores/BtnColorAzul
 
-@onready var btn_parabrisas: Button = $HBoxMain/PanelSidebar/GridAccesorios/BtnParabrisas
-@onready var btn_alforjas: Button = $HBoxMain/PanelSidebar/GridAccesorios/BtnAlforjas
-@onready var btn_escape: Button = $HBoxMain/PanelSidebar/GridAccesorios/BtnEscape
+@onready var btn_parabrisas: Button = $HBoxMain/SidebarScroll/PanelSidebar/GridAccesorios/BtnParabrisas
+@onready var btn_alforjas: Button = $HBoxMain/SidebarScroll/PanelSidebar/GridAccesorios/BtnAlforjas
+@onready var btn_escape: Button = $HBoxMain/SidebarScroll/PanelSidebar/GridAccesorios/BtnEscape
+
+# Laboratorio 9 — lista de rines generada automáticamente desde
+# GlobalManager.rims (catálogo de Resource), ningún botón escrito a mano.
+@onready var grid_rines: Container = $HBoxMain/SidebarScroll/PanelSidebar/GridRines
+@onready var wheel_composition: WheelComposition = $HBoxMain/PanelVista/WheelComposition
 
 @onready var vista_moto: TextureRect = $HBoxMain/PanelVista/VistaMoto
 @onready var lbl_placeholder: Label = $HBoxMain/PanelVista/VistaMoto/LblPlaceholder
@@ -42,6 +47,17 @@ func _ready() -> void:
 	btn_escape.toggled.connect(_on_accessory_button_toggled.bind("Escape Deportivo"))
 
 	btn_voltear.pressed.connect(_on_btn_voltear_pressed)
+
+	# Laboratorio 9 — un botón por cada rin del catálogo, generado
+	# automáticamente. Agregar un rin nuevo a rim_database.tres no
+	# requiere tocar esta pantalla.
+	for rim: RimData in GlobalManager.rims:
+		var boton_rin: Button = Button.new()
+		boton_rin.text = "%s (%s)" % [rim.display_name, _formatear_precio(rim.price)]
+		boton_rin.pressed.connect(_on_rim_button_pressed.bind(rim))
+		grid_rines.add_child(boton_rin)
+
+	EventBus.rim_total_changed.connect(_on_rim_total_changed)
 
 	# --- Zona de interacción: resalta qué opción está bajo el mouse ---
 	for boton_zona: Dictionary in [
@@ -107,7 +123,17 @@ func _restaurar_estado_actual() -> void:
 	if GlobalManager.accesorios_activos.has("Escape Deportivo"):
 		btn_escape.button_pressed = true
 
-	lbl_total.text = "Total accesorios: $%d" % GlobalManager.precio_total
+	# Laboratorio 9 — si ya habías elegido rines, se vuelven a mostrar.
+	for wheel: String in ["front", "rear"]:
+		var rim_id: String = GlobalManager.moto_rines.get(wheel, "")
+		if rim_id.is_empty():
+			continue
+		for rim: RimData in GlobalManager.rims:
+			if rim.id == rim_id:
+				wheel_composition.aplicar_rim_guardado(rim, wheel)
+				break
+
+	_actualizar_total_combinado()
 
 func _on_color_button_pressed(nombre_color: String) -> void:
 	EventBus.color_selected.emit(nombre_color)
@@ -129,8 +155,34 @@ func _mostrar_imagen_color(nombre_color: String) -> void:
 func _on_btn_voltear_pressed() -> void:
 	vista_moto.flip_h = not vista_moto.flip_h
 
-func _on_total_changed(nuevo_total: int) -> void:
-	lbl_total.text = "Total accesorios: $%d" % nuevo_total
+func _on_total_changed(_nuevo_total: int) -> void:
+	_actualizar_total_combinado()
+
+func _on_rim_total_changed(_nuevo_total: int) -> void:
+	_actualizar_total_combinado()
+
+## Laboratorio 9 — el botón de un rin no sabe a qué rueda se aplica;
+## eso lo decide WheelComposition según cuál esté activa en ese momento.
+func _on_rim_button_pressed(rim: RimData) -> void:
+	wheel_composition._on_rim_selected(rim)
+
+## El total mostrado ahora suma accesorios + rines, en vez de ser cada
+## uno un número aparte.
+func _actualizar_total_combinado() -> void:
+	lbl_total.text = "Total: $%d" % (GlobalManager.precio_total + GlobalManager.moto_rines_total)
+
+## Formatea un entero con puntos de miles, estilo "$180.000", igual que
+## el texto escrito a mano en los botones de accesorios.
+func _formatear_precio(valor: int) -> String:
+	var texto: String = str(valor)
+	var resultado: String = ""
+	var contador: int = 0
+	for i in range(texto.length() - 1, -1, -1):
+		resultado = texto[i] + resultado
+		contador += 1
+		if contador % 3 == 0 and i != 0:
+			resultado = "." + resultado
+	return "$" + resultado
 
 func _on_zona_mouse_entered(nombre_zona: String) -> void:
 	lbl_zona_activa.text = "Zona activa: %s" % nombre_zona
