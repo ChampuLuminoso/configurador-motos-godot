@@ -26,6 +26,10 @@ GlobalManager="*res://src/core/global_manager.gd"
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gdUnit4/plugin.cfg")
+
 [gui]
 
 theme/custom="res://src/assets/ui/theme_industrial.tres"

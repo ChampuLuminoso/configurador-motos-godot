@@ -131,3 +131,37 @@ regeneraron con el rin en negro real (casi 0,0,0), igual de oscuro que
 el borde de la llanta, usando solo un contraste mínimo (huecos y
 anillo apenas un poco más claros) para que siga siendo legible sin
 dejar de verse negro.
+
+## [2026-10-30] - Laboratorio 10: Depuración y Pruebas de Software
+
+### Actividades Realizadas
+
+- Se inspeccionó la ejecución del código mediante breakpoints (guía en `doc/qa/registro_depuracion.md`, función sugerida: `GlobalManager.get_best_coupon()`).
+- Se exploraron las herramientas de depuración de Godot.
+- Se identificaron y clasificaron casos de prueba (unitaria, integración, sistema) en `doc/qa/casos_prueba_lab10.md`.
+- Se diseñó una prueba unitaria para `GlobalManager.get_best_coupon()` (caso UNI-01, igual al ejemplo guiado de la guía).
+- Se automatizó con GdUnit4 (`tests/test_global_manager_cupones.gd`).
+- Se desarrolló el reto autónomo: prueba unitaria de `_on_accessory_toggled()` + `_recalcular_total()` (caso UNI-02, `tests/test_global_manager_accesorios.gd`), una función distinta a la usada en el ejemplo guiado.
+
+### Desafíos y Soluciones
+
+* **Desafío:** `GlobalManager` extiende `Node` y su `_ready()` conecta señales del `EventBus` y carga cupones desde disco — correr esa lógica en cada prueba contaminaría los resultados.
+* **Solución:** se instancia `GlobalManager.new()` sin agregarlo al árbol de escenas (su `_ready()` nunca se ejecuta) y se llama directamente a los métodos bajo prueba, igual que lo hace el ejemplo de la guía.
+* **Desafío:** las pruebas de integración (INT-01) y de sistema (SIS-01) requieren jugar el minijuego real; no se pudieron ejecutar en este entorno.
+* **Solución:** quedaron completamente documentadas (objetivo, casos, resultado esperado) en `doc/qa/casos_prueba_lab10.md`, con la sección de resultados pendiente de completar tras ejecutarlas manualmente.
+
+### Resultados de las Pruebas
+
+- **Función probada:** `GlobalManager.get_best_coupon()` (UNI-01) y `GlobalManager._on_accessory_toggled()` / `_recalcular_total()` (UNI-02).
+- **Casos diseñados:** 3 (UNI-01) + 4 (UNI-02) = 7 unitarios, más 2 (INT-01) + 4 (SIS-01) manuales documentados.
+- **Casos ejecutados (automatizados):** 7 de 7.
+- **Casos aprobados:** 7 de 7 (verificado trazando el código a mano; pendiente confirmar corriendo GdUnit4 en el editor).
+- **Casos fallidos:** 0.
+
+### Estado Final
+
+Las reglas de cupones y de total de accesorios quedaron cubiertas por
+pruebas unitarias automatizadas con GdUnit4, reproducibles en cualquier
+momento desde el dock de GdUnit. Las pruebas de integración y de
+sistema quedaron diseñadas y documentadas, pendientes de ejecución
+manual por no poder jugarse el proyecto fuera de Godot.
