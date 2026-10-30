@@ -4,11 +4,16 @@
 # disponible para el subtotal actual.
 extends Control
 
+# Pantalla de inicio (menú) a la que se vuelve automáticamente tras
+# confirmar la compra, haya o no cupón de descuento aplicado.
+const MENU_SCENE_PATH: String = "res://src/scenes/menu/menu_panel.tscn"
+
 @onready var lbl_subtotal: Label = $VBoxContainer/LblSubtotal
 @onready var lbl_coupon: Label = $VBoxContainer/LblCoupon
 @onready var lbl_total: Label = $VBoxContainer/LblTotal
 @onready var btn_confirm: Button = $VBoxContainer/BtnConfirm
 @onready var pop_up_confirm: Panel = $PurchaseSuccessPopup
+@onready var lbl_mensaje_popup: Label = $PurchaseSuccessPopup/VBoxContainer/LblMensaje
 @onready var btn_cerrar_popup: Button = $PurchaseSuccessPopup/VBoxContainer/BtnCerrarPopup
 
 var applied_coupon: Dictionary = {}
@@ -19,15 +24,22 @@ func _ready() -> void:
 	_update_invoice()
 
 func _on_confirm() -> void:
+	# Con o sin cupón aplicado, la confirmación termina igual: se limpia
+	# el cupón usado (si lo había) y se muestra el mensaje de
+	# agradecimiento antes de volver al inicio.
 	if not applied_coupon.is_empty():
 		GlobalManager.remove_coupon(applied_coupon)
 		applied_coupon = {}
 	lbl_coupon.text = "Compra confirmada. ¡Gracias por elegirnos!"
+	lbl_mensaje_popup.text = "¡Compra confirmada!\nGracias por preferirnos, buen día."
 	btn_confirm.disabled = true
 	pop_up_confirm.show()
 
 func _on_cerrar_popup() -> void:
 	pop_up_confirm.hide()
+	# Vuelve a la pantalla de inicio (menú) sin importar si hubo
+	# descuento o no — la compra ya quedó confirmada arriba.
+	EventBus.navigation_requested.emit(MENU_SCENE_PATH, false)
 
 func _update_invoice() -> void:
 	var color_actual: String = GlobalManager.color_actual
