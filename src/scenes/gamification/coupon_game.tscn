@@ -1,121 +1,70 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://src/scenes/gamification/coupon_game.gd" id="1"]
-[ext_resource type="Script" path="res://src/scenes/gamification/player.gd" id="2"]
-[ext_resource type="PackedScene" path="res://src/scenes/gamification/spawner.tscn" id="3"]
-[ext_resource type="PackedScene" path="res://src/components/navigation/button_nav.tscn" id="4"]
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
-size = Vector2(64, 64)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_recolect"]
-size = Vector2(170, 70)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
-size = Vector2(1000, 32)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
-size = Vector2(20, 420)
+[ext_resource type="PackedScene" path="res://src/components/navigation/button_nav.tscn" id="2"]
+[ext_resource type="Texture2D" path="res://src/assets/textures/escenario/taller_fondo_cemento.png" id="3"]
+[ext_resource type="Texture2D" path="res://src/assets/textures/cinta/cinta_tile.png" id="4"]
+[ext_resource type="PackedScene" path="res://src/scenes/gamification/basket.tscn" id="5"]
 
 [node name="CouponGame" type="Node2D"]
 script = ExtResource("1")
-target_items = 8
-max_spawned_items = 20
+target_aciertos = 10
+max_errores = 5
 coupon_value = 50000
 coupon_minimum_value = 300000
+spawn_interval = 1.4
+belt_speed = 140.0
+belt_y = 214.0
 
-[node name="Player" type="CharacterBody2D" parent="."]
+[node name="Fondo" type="Sprite2D" parent="."]
+z_index = -2
+position = Vector2(576, 324)
+texture = ExtResource("3")
+
+[node name="CintaVisual" type="TextureRect" parent="."]
+layout_mode = 0
+position = Vector2(0, 250)
+size = Vector2(1152, 36)
+texture = ExtResource("4")
+stretch_mode = 1
+mouse_filter = 2
+
+[node name="SpawnTimer" type="Timer" parent="."]
+one_shot = false
+
+[node name="BasketMotor" parent="." instance=ExtResource("5")]
+position = Vector2(200, 560)
+zone_id = "motor"
+
+[node name="Titulo" parent="BasketMotor" index="2"]
+text = "Motor"
+
+[node name="Subtitulo" parent="BasketMotor" index="3"]
+text = "Filtro de aceite, bujía"
+
+[node name="BasketTransmision" parent="." instance=ExtResource("5")]
 position = Vector2(576, 560)
-script = ExtResource("2")
-speed = 420.0
+zone_id = "transmision"
 
-[node name="Visual" type="ColorRect" parent="Player"]
-layout_mode = 0
-position = Vector2(-32, -32)
-size = Vector2(64, 64)
-color = Color(0.15, 0.15, 0.16, 1)
-mouse_filter = 2
+[node name="Titulo" parent="BasketTransmision" index="2"]
+text = "Transmisión"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
-shape = SubResource("RectangleShape2D_player")
+[node name="Subtitulo" parent="BasketTransmision" index="3"]
+text = "Piñón, cadena"
 
-[node name="AreaRecolect" type="Area2D" parent="Player"]
-position = Vector2(0, -70)
+[node name="BasketDescarte" parent="." instance=ExtResource("5")]
+position = Vector2(952, 560)
+zone_id = "descarte"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Player/AreaRecolect"]
-shape = SubResource("RectangleShape2D_recolect")
+[node name="Titulo" parent="BasketDescarte" index="2"]
+text = "Descarte"
 
-[node name="Floor" type="StaticBody2D" parent="." groups=["floor"]]
-position = Vector2(576, 620)
-
-[node name="Visual" type="ColorRect" parent="Floor"]
-layout_mode = 0
-position = Vector2(-500, -16)
-size = Vector2(1000, 32)
-color = Color(0.45, 0.45, 0.47, 1)
-mouse_filter = 2
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor"]
-shape = SubResource("RectangleShape2D_floor")
-
-[node name="FunnelWalls" type="StaticBody2D" parent="."]
-position = Vector2(576, 250)
-
-[node name="WallLeft" type="CollisionShape2D" parent="FunnelWalls"]
-position = Vector2(-320, 0)
-rotation = -0.22
-shape = SubResource("RectangleShape2D_wall")
-
-[node name="WallLeftVisual" type="ColorRect" parent="FunnelWalls"]
-position = Vector2(-320, 0)
-rotation = -0.22
-layout_mode = 0
-size = Vector2(20, 420)
-offset_left = -10.0
-offset_top = -210.0
-color = Color(0.85, 0.45, 0.1, 1)
-mouse_filter = 2
-
-[node name="WallRight" type="CollisionShape2D" parent="FunnelWalls"]
-position = Vector2(320, 0)
-rotation = 0.22
-shape = SubResource("RectangleShape2D_wall")
-
-[node name="WallRightVisual" type="ColorRect" parent="FunnelWalls"]
-position = Vector2(320, 0)
-rotation = 0.22
-layout_mode = 0
-size = Vector2(20, 420)
-offset_left = -10.0
-offset_top = -210.0
-color = Color(0.85, 0.45, 0.1, 1)
-mouse_filter = 2
-
-[node name="SpawnerCentro" parent="." instance=ExtResource("3")]
-position = Vector2(576, 30)
-max_active_items = 6
-spawn_interval = 0.9
-use_parabola = false
-
-[node name="SpawnerIzquierda" parent="." instance=ExtResource("3")]
-position = Vector2(280, 60)
-max_active_items = 5
-spawn_interval = 1.2
-use_parabola = true
-parabola_horizontal_range = 150.0
-parabola_vertical_impulse = -180.0
-
-[node name="SpawnerDerecha" parent="." instance=ExtResource("3")]
-position = Vector2(872, 60)
-max_active_items = 5
-spawn_interval = 1.2
-use_parabola = true
-parabola_horizontal_range = 150.0
-parabola_vertical_impulse = -180.0
+[node name="Subtitulo" parent="BasketDescarte" index="3"]
+text = "Dañados y chatarra de taller"
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
-[node name="BtnVolver" parent="CanvasLayer" instance=ExtResource("4")]
+[node name="BtnVolver" parent="CanvasLayer" instance=ExtResource("2")]
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 180.0
@@ -124,17 +73,47 @@ text = "Salir del juego"
 target_scene = "res://src/scenes/coupon_event/coupon_event.tscn"
 discard_previous = true
 
-[node name="Objective" type="Label" parent="CanvasLayer"]
+[node name="Instrucciones" type="Label" parent="CanvasLayer"]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -260.0
+offset_left = -460.0
 offset_top = 16.0
 offset_right = -16.0
-offset_bottom = 40.0
-theme_override_font_sizes/font_size = 18
+offset_bottom = 84.0
+theme_override_font_sizes/font_size = 14
 horizontal_alignment = 2
-text = "Repuestos: 0 / 8"
+autowrap_mode = 2
+text = "Haz clic en un repuesto de la cinta para tomarlo.
+Haz clic en la canasta correcta (abajo) para soltarlo."
+
+[node name="Marcador" type="Panel" parent="CanvasLayer"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -220.0
+offset_top = 92.0
+offset_right = -16.0
+offset_bottom = 150.0
+grow_horizontal = 0
+
+[node name="MarcadorBox" type="VBoxContainer" parent="CanvasLayer/Marcador"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 192.0
+offset_bottom = 50.0
+theme_override_constants/separation = 4
+
+[node name="AciertosLabel" type="Label" parent="CanvasLayer/Marcador/MarcadorBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Aciertos: 0 / 10"
+
+[node name="ErroresLabel" type="Label" parent="CanvasLayer/Marcador/MarcadorBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Errores: 0 / 5"
 
 [node name="ResultPanel" type="Panel" parent="CanvasLayer"]
 visible = false
@@ -167,7 +146,7 @@ text = "Resultado"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="BtnResultVolver" parent="CanvasLayer/ResultPanel" instance=ExtResource("4")]
+[node name="BtnResultVolver" parent="CanvasLayer/ResultPanel" instance=ExtResource("2")]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5

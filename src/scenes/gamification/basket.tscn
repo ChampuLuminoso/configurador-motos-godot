@@ -1,0 +1,37 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/scenes/gamification/basket.gd" id="1"]
+[ext_resource type="Texture2D" path="res://src/assets/textures/cinta/canasta.png" id="2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_basket"]
+size = Vector2(200, 120)
+
+[node name="Basket" type="Area2D" groups=["basket"]]
+input_pickable = true
+script = ExtResource("1")
+zone_id = "motor"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_basket")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+position = Vector2(0, -30)
+texture = ExtResource("2")
+scale = Vector2(1.35, 1.0)
+
+[node name="Titulo" type="Label" parent="."]
+layout_mode = 0
+position = Vector2(-100, 2)
+size = Vector2(200, 24)
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+text = "Motor"
+
+[node name="Subtitulo" type="Label" parent="."]
+layout_mode = 0
+position = Vector2(-100, 26)
+size = Vector2(200, 36)
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 1
+autowrap_mode = 2
+text = "Filtro de aceite, bujía"

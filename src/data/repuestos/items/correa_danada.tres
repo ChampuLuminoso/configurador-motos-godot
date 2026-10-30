@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="PartData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/data/repuestos/part_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://src/assets/textures/repuestos/correa_danada.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "correa_danada"
+display_name = "Correa Dañada"
+texture = ExtResource("2")
+category = 1
+subsystem = 1

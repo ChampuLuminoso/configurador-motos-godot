@@ -1,12 +1,22 @@
 # res://src/scenes/gamification/coupon_game.gd
 # ---------------------------------------------------------------------------
-# Laboratorio 6 — Máquina de Estado Finito (FSM) aplicada al minijuego
-# "Taller de Repuestos".
+# Máquina de Estado Finito (FSM) del minijuego "Taller de Repuestos".
+#
+# Modalidad: cinta transportadora + canastas. Los repuestos se deslizan
+# por una cinta de izquierda a derecha. El jugador hace clic sobre uno
+# para tomarlo (queda "en la mano", siguiendo al cursor) y luego hace
+# clic en la canasta correcta para clasificarlo:
+#   - Repuestos buenos (GOOD) van a la canasta de su subsistema (Motor
+#     o Transmisión).
+#   - Repuestos dañados (DAMAGED) o chatarra (JUNK) siempre van a la
+#     canasta de Descarte, sin importar a qué se parezcan.
+# Si un repuesto llega al final de la cinta sin ser tomado, también
+# cuenta como error (se "perdió" esa pieza).
 #
 # Estados:
-#   PLAYING -> el jugador puede moverse y recolectar. Estado inicial.
-#   WON     -> se alcanzó la meta de repuestos. Estado terminal.
-#   LOST    -> se superó el límite de repuestos generados. Estado terminal.
+#   PLAYING -> el jugador puede tomar y clasificar. Estado inicial.
+#   WON     -> se alcanzó la meta de aciertos. Estado terminal.
+#   LOST    -> se acumularon demasiados errores. Estado terminal.
 #
 # Transiciones permitidas:
 #   PLAYING -> WON
@@ -14,52 +24,161 @@
 #   (WON y LOST son terminales: no permiten ninguna transición de salida)
 #
 # Todo cambio de estado pasa por change_state(), la única función que
-# decide si una transición es válida.
+# decide si una transición es válida — mismo patrón del Laboratorio 6.
 # ---------------------------------------------------------------------------
 extends Node2D
 
 enum GameState { PLAYING, WON, LOST }
+enum Zone { MOTOR, TRANSMISION, DESCARTE }
 
-@export var target_items: int = 8
-@export var max_spawned_items: int = 20
+const BeltPartScene: PackedScene = preload("res://src/scenes/gamification/belt_part.tscn")
+const PART_DATABASE: PartDatabase = preload("res://src/data/repuestos/part_database.tres")
+const CURSOR_TEXTURE: Texture2D = preload("res://src/assets/ui/cursor/cursor_chico.png")
+
+# El puntito amarillo dibujado sobre el ícono del cursor queda justo en
+# este píxel de la textura — ahí es exactamente donde registra el clic
+# (Input.set_custom_mouse_cursor usa "hotspot" para eso), no en una
+# esquina del dibujo ni debajo de los pies.
+const CURSOR_HOTSPOT: Vector2 = Vector2(36, 6)
+
+const PART_WEIGHT_GOOD: int = 3
+const PART_WEIGHT_OTHER: int = 1
+
+@export var target_aciertos: int = 10
+@export var max_errores: int = 5
 @export var coupon_value: int = 50000
 @export var coupon_minimum_value: int = 300000
+@export var spawn_interval: float = 1.4
+@export var belt_speed: float = 140.0
+@export var belt_y: float = 214.0
+@export var belt_start_x: float = -40.0
+@export var belt_despawn_x: float = 1220.0
 
-@onready var objective: Label = $CanvasLayer/Objective
+@onready var spawn_timer: Timer = $SpawnTimer
+@onready var basket_motor: RepairBasket = $BasketMotor
+@onready var basket_transmision: RepairBasket = $BasketTransmision
+@onready var basket_descarte: RepairBasket = $BasketDescarte
+@onready var aciertos_label: Label = $CanvasLayer/Marcador/MarcadorBox/AciertosLabel
+@onready var errores_label: Label = $CanvasLayer/Marcador/MarcadorBox/ErroresLabel
 @onready var result_panel: Control = $CanvasLayer/ResultPanel
 @onready var result_label: Label = $CanvasLayer/ResultPanel/ResultLabel
 @onready var btn_result_volver: Button = $CanvasLayer/ResultPanel/BtnResultVolver
 
 var current_state: GameState = GameState.PLAYING
-var current_spawned_items: int = 0
-var collected_items: int = 0
+var aciertos: int = 0
+var errores: int = 0
+var weighted_parts: Array[PartData] = []
+var held_part: BeltPart = null
 
 func _ready() -> void:
-	var spawners: Array = get_tree().get_nodes_in_group("spawner")
-	for spawn: Node in spawners:
-		spawn.spawned_item.connect(_on_item_spawned)
+	get_viewport().physics_object_picking = true
+	Input.set_custom_mouse_cursor(CURSOR_TEXTURE, Input.CURSOR_ARROW, CURSOR_HOTSPOT)
 
-	$Player.collected_food.connect(_on_player_collected_food)
-	_actualizar_objetivo()
+	_construir_pool_ponderado()
+	_actualizar_marcador()
+
+	spawn_timer.wait_time = spawn_interval
+	spawn_timer.timeout.connect(_on_spawn_timer_timeout)
+	spawn_timer.start()
+
+	for basket: RepairBasket in [basket_motor, basket_transmision, basket_descarte]:
+		basket.basket_clicked.connect(_on_basket_clicked)
+
+func _exit_tree() -> void:
+	# Restaura el cursor normal del sistema para el resto de la app
+	# (menús, configurador, etc.) al salir de este minijuego.
+	Input.set_custom_mouse_cursor(null)
+
+func _process(_delta: float) -> void:
+	if held_part != null:
+		held_part.global_position = get_global_mouse_position() + Vector2(0, 42)
+
+# ---------------------------------------------------------------------------
+# Generación de repuestos en la cinta
+# ---------------------------------------------------------------------------
+
+func _construir_pool_ponderado() -> void:
+	for part: PartData in PART_DATABASE.parts:
+		var weight: int = PART_WEIGHT_GOOD if part.category == PartData.Category.GOOD else PART_WEIGHT_OTHER
+		for i in range(weight):
+			weighted_parts.append(part)
+
+func _elegir_parte() -> PartData:
+	return weighted_parts[randi() % weighted_parts.size()]
+
+func _on_spawn_timer_timeout() -> void:
+	if current_state != GameState.PLAYING:
+		return
+	var item: BeltPart = BeltPartScene.instantiate()
+	add_child(item)
+	item.global_position = Vector2(belt_start_x, belt_y)
+	item.speed = belt_speed
+	item.despawn_x = belt_despawn_x
+	item.set_part(_elegir_parte())
+	item.picked_up.connect(_on_part_picked_up)
+	item.left_belt.connect(_on_part_left_belt)
 
 # ---------------------------------------------------------------------------
 # Entradas que PUEDEN pedir un cambio de estado (no lo hacen directamente)
 # ---------------------------------------------------------------------------
 
-func _on_item_spawned() -> void:
-	if current_state != GameState.PLAYING:
+func _on_part_picked_up(part: BeltPart) -> void:
+	if current_state != GameState.PLAYING or held_part != null:
 		return
-	current_spawned_items += 1
-	if current_spawned_items > max_spawned_items:
+	held_part = part
+	part.held = true
+
+func _on_part_left_belt(part: BeltPart) -> void:
+	if current_state != GameState.PLAYING or part == held_part:
+		return
+	errores += 1
+	_actualizar_marcador()
+	if errores >= max_errores:
 		change_state(GameState.LOST)
 
-func _on_player_collected_food() -> void:
-	if current_state != GameState.PLAYING:
+func _on_basket_clicked(zone_id: String) -> void:
+	if current_state != GameState.PLAYING or held_part == null:
 		return
-	collected_items += 1
-	_actualizar_objetivo()
-	if collected_items >= target_items:
-		change_state(GameState.WON)
+
+	var part: PartData = held_part.part_data
+	var zona_clic: Zone = _zone_from_id(zone_id)
+	var zona_correcta: Zone = _zona_correcta(part)
+
+	held_part.queue_free()
+	held_part = null
+
+	if zona_clic == zona_correcta:
+		aciertos += 1
+		_actualizar_marcador()
+		if aciertos >= target_aciertos:
+			change_state(GameState.WON)
+	else:
+		errores += 1
+		_actualizar_marcador()
+		if errores >= max_errores:
+			change_state(GameState.LOST)
+
+# ---------------------------------------------------------------------------
+# Reglas de clasificación
+# ---------------------------------------------------------------------------
+
+func _zone_from_id(zone_id: String) -> Zone:
+	match zone_id:
+		"motor":
+			return Zone.MOTOR
+		"transmision":
+			return Zone.TRANSMISION
+	return Zone.DESCARTE
+
+func _zona_correcta(part: PartData) -> Zone:
+	if part.category != PartData.Category.GOOD:
+		return Zone.DESCARTE
+	match part.subsystem:
+		PartData.Subsystem.MOTOR:
+			return Zone.MOTOR
+		PartData.Subsystem.TRANSMISION:
+			return Zone.TRANSMISION
+	return Zone.DESCARTE
 
 # ---------------------------------------------------------------------------
 # Función central de la FSM — único lugar donde "current_state" cambia
@@ -101,19 +220,21 @@ func _enter_won() -> void:
 	}
 	EventBus.coupon_obtained.emit(coupon)
 
-	result_label.text = "¡Cupón obtenido: $%d!" % coupon_value
+	result_label.text = "¡Repuestos bien clasificados! Cupón obtenido: $%d" % coupon_value
 	_reproducir_animacion_resultado()
 
 func _enter_lost() -> void:
 	_detener_minijuego()
-	result_label.text = "No obtuviste el cupón. Se cayeron demasiados repuestos."
+	result_label.text = "Se te acumularon demasiados repuestos mal clasificados o perdidos en la cinta."
 	_reproducir_animacion_resultado()
 
 func _detener_minijuego() -> void:
-	var spawners: Array = get_tree().get_nodes_in_group("spawner")
-	for spawn: Node in spawners:
-		spawn.queue_free()
-	$Player.queue_free()
+	spawn_timer.stop()
+	if held_part != null:
+		held_part.queue_free()
+		held_part = null
+	for part: Node in get_tree().get_nodes_in_group("belt_part"):
+		part.queue_free()
 
 # ---------------------------------------------------------------------------
 # Animación Tween asociada a la TRANSICIÓN (no al estado en sí)
@@ -137,5 +258,10 @@ func _reproducir_animacion_resultado() -> void:
 func _on_result_animation_finished() -> void:
 	btn_result_volver.disabled = false
 
-func _actualizar_objetivo() -> void:
-	objective.text = "Repuestos: %d / %d" % [collected_items, target_items]
+# ---------------------------------------------------------------------------
+# Marcador en pantalla
+# ---------------------------------------------------------------------------
+
+func _actualizar_marcador() -> void:
+	aciertos_label.text = "Aciertos: %d / %d" % [aciertos, target_aciertos]
+	errores_label.text = "Errores: %d / %d" % [errores, max_errores]
