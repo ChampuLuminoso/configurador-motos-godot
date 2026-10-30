@@ -9,17 +9,28 @@
 # que esas dependencias no afecten la prueba, la instancia NUNCA se
 # agrega al árbol de escenas (su _ready() nunca se ejecuta) y la
 # colección de cupones se prepara a mano en cada caso.
+#
+# IMPORTANTE: before_test()/after_test() (no before()/after()) son los
+# que GdUnit4 corre ANTES y DESPUÉS DE CADA caso. before()/after() solo
+# corren una vez para toda la suite — si se usan por error, la misma
+# instancia de manager se reutiliza entre pruebas y el estado de una
+# prueba contamina la siguiente.
 class_name TestGlobalManagerCupones
 extends GdUnitTestSuite
 
 const GlobalManagerScript = preload("res://src/core/global_manager.gd")
 
-var manager
+# Tipado explícito (no "var manager" a secas): así "manager.coupons = [...]"
+# es una asignación estáticamente tipada y GDScript puede convertir el
+# array literal a Array[Dictionary]. Sin el tipo, esa misma línea pasa
+# por el setter dinámico de Object y falla con "Invalid assignment of
+# property or key 'coupons' with value of type 'Array'".
+var manager: GlobalManagerScript
 
-func before() -> void:
+func before_test() -> void:
 	manager = GlobalManagerScript.new()
 
-func after() -> void:
+func after_test() -> void:
 	manager.free()
 
 # Caso 1 — Cupón válido: hay un solo cupón y la compra alcanza su mínimo.

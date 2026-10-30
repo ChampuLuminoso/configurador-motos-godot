@@ -8,17 +8,23 @@
 # no se agrega al árbol, así que _ready() nunca conecta el EventBus.
 # Por eso las pruebas llaman directamente a _on_accessory_toggled() en
 # vez de emitir la señal — un emit no llegaría a esta instancia huérfana.
+#
+# IMPORTANTE: before_test()/after_test() (no before()/after()) corren
+# ANTES y DESPUÉS DE CADA caso. before()/after() corren una sola vez
+# para toda la suite, así que con ellos la misma instancia de manager
+# se reutiliza entre las 4 pruebas y el total/accesorios activos de una
+# prueba quedan como estado inicial de la siguiente.
 class_name TestGlobalManagerAccesorios
 extends GdUnitTestSuite
 
 const GlobalManagerScript = preload("res://src/core/global_manager.gd")
 
-var manager
+var manager: GlobalManagerScript
 
-func before() -> void:
+func before_test() -> void:
 	manager = GlobalManagerScript.new()
 
-func after() -> void:
+func after_test() -> void:
 	manager.free()
 
 # Caso positivo — un accesorio válido activado suma su precio.
